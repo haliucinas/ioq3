@@ -1224,7 +1224,7 @@ wait 10 seconds before going on.
 =================
 */
 void CheckIntermissionExit( void ) {
-	int			ready, notReady, playerCount;
+	int			ready, notReady, playerCount, botCount;
 	int			i;
 	gclient_t	*cl;
 	int			readyMask;
@@ -1238,12 +1238,14 @@ void CheckIntermissionExit( void ) {
 	notReady = 0;
 	readyMask = 0;
 	playerCount = 0;
+	botCount = 0;
 	for (i=0 ; i< g_maxclients.integer ; i++) {
 		cl = level.clients + i;
 		if ( cl->pers.connected != CON_CONNECTED ) {
 			continue;
 		}
 		if ( g_entities[i].r.svFlags & SVF_BOT ) {
+			botCount++;
 			continue;
 		}
 
@@ -1270,6 +1272,16 @@ void CheckIntermissionExit( void ) {
 
 	// never exit in less than five seconds
 	if ( level.time < level.intermissiontime + 5000 ) {
+		return;
+	}
+
+	// start sixty second timeout for bot only matches
+	if ( playerCount == 0 && botCount > 0 ) {
+		// never exit in less than a minute
+		if ( level.time < level.intermissiontime + 60000 ) {
+			return;
+		}
+		ExitLevel();
 		return;
 	}
 
